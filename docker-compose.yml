@@ -1,0 +1,38 @@
+version: '2'
+services:
+  db:
+    env_file: .env
+    container_name: "${NAME}-db"
+    image: "mdillon/postgis:10"
+    command: postgres -c max_locks_per_transaction=300
+# added command above
+    environment:
+      PG_DATA: /var/lib/postgresql/data/pgdata
+      POSTGRES_DB: dhis2
+     # POSTGRES_DB_TARGET: "${DB}-target"
+      POSTGRES_PASSWORD: dhis2
+      POSTGRES_USER: dhis2
+    ports:
+      - "5436:5436"
+    restart: on-failure
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+  web:
+    env_file:
+      - .env
+    container_name: "${NAME}-web"
+    restart: on-failure
+    build: .
+    depends_on:
+      - db
+    environment:
+      JAVA_OPTS: "-Xms1024m -Xmx4000m"
+      JAVA_OPTS: "-Djava.security.egd=file:/dev/./urandom"
+      POSTGRES_DB: "${NAME}_dhis2"
+    ports:
+      - "${WEB_PORT}:8080"
+    command: catalina.sh run # https://github.com/docker/compose/issues/3140
+volumes:
+  pgdata:
+
